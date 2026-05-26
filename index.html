@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#2B2D6E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>«Noch einmal, bitte!» – OKS Gastro-Voting</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: #ECEEF2;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+
+    #app {
+      background: #fff;
+      width: 100%;
+      max-width: 430px;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* ── HEADER ── */
+    .hdr {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #fff;
+      border-bottom: 1.5px solid #E2E6EC;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+    .hdr-logo {
+      height: 38px;
+      width: auto;
+      flex-shrink: 0;
+    }
+    .hdr-text { flex: 1; min-width: 0; }
+    .hdr-inst {
+      font-size: 8.5px;
+      font-weight: 700;
+      color: #2D7A68;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+    .hdr-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #2B2D6E;
+      line-height: 1.15;
+      margin-top: 1px;
+    }
+    .hdr-sub {
+      font-size: 9.5px;
+      color: #999;
+      margin-top: 1px;
+    }
+    .counter {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .cnt-num {
+      font-size: 11px;
+      font-weight: 800;
+      color: #2B2D6E;
+    }
+    .cnt-dots { display: flex; gap: 4px; }
+    .cdot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #E2E6EC;
+      transition: background 0.2s;
+    }
+
+    /* ── CONTENT ── */
+    .content { padding: 14px 14px 32px; }
+
+    /* ── INTRO ── */
+    .intro {
+      font-size: 12.5px;
+      line-height: 1.65;
+      color: #555;
+      padding: 8px 10px 8px 11px;
+      border-left: 3px solid #4DBFB5;
+      background: #FAFBFF;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 12px;
+    }
+
+    /* ── DISH GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .dish {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      padding: 8px 9px;
+      background: #fff;
+      border: 1px solid #E2E6EC;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .dish.selected {
+      background: rgba(43, 45, 110, 0.07);
+      border: 1.5px solid #2B2D6E;
+    }
+    .dish.disabled {
+      opacity: 0.28;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .dish-num {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 600;
+      color: #aaa;
+      background: #F6F7FA;
+      border: 1px solid #E2E6EC;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .dish.selected .dish-num {
+      background: #2B2D6E;
+      border-color: #2B2D6E;
+      color: #fff;
+    }
+    .dish-text { flex: 1; min-width: 0; }
+    .dish-name {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: #333;
+      line-height: 1.25;
+    }
+    .dish.selected .dish-name {
+      font-weight: 700;
+      color: #2B2D6E;
+    }
+    .dish-sub {
+      font-size: 9.5px;
+      color: #aaa;
+      line-height: 1.2;
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── SUBMIT BUTTON ── */
+    .btn-submit {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.1px;
+      cursor: not-allowed;
+      background: #F0F2F5;
+      color: #bbb;
+      transition: background 0.25s, color 0.25s, transform 0.1s;
+    }
+    .btn-submit.ready {
+      background: #E8404A;
+      color: #fff;
+      cursor: pointer;
+    }
+    .btn-submit.ready:active {
+      transform: scale(0.98);
+    }
+
+    /* ── RESULTS ── */
+    .res-hdr { margin-bottom: 14px; }
+    .res-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #2B2D6E;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 3px;
+    }
+    .res-title-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #4DBFB5;
+      flex-shrink: 0;
+    }
+    .res-count { font-size: 12px; color: #999; padding-left: 17px; }
+
+    .ri {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      margin-bottom: 5px;
+      border-radius: 7px;
+      background: #F6F7FA;
+      border: 1px solid #E2E6EC;
+    }
+    .ri.top {
+      background: #fff;
+      border-color: #4DBFB5;
+    }
+    .ri-rank {
+      font-size: 14px;
+      min-width: 22px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .ri-rank-num {
+      font-size: 10px;
+      font-weight: 700;
+      color: #ccc;
+    }
+    .ri-info { flex: 1; min-width: 0; }
+    .ri-name {
+      font-size: 11.5px;
+      font-weight: 400;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 4px;
+      overflow: hidden;
+    }
+    .ri.top .ri-name { font-weight: 700; }
+    .ri-name-txt {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+    .my-badge {
+      font-size: 8.5px;
+      background: rgba(43,45,110,0.09);
+      color: #2B2D6E;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-weight: 700;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .bar-bg {
+      height: 3px;
+      background: #E2E6EC;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .ri.top .bar-fill { background: #2B2D6E; }
+    .ri:not(.top) .bar-fill { background: #4DBFB5; }
+    .ri-votes {
+      font-size: 13px;
+      font-weight: 700;
+      min-width: 24px;
+      text-align: right;
+      flex-shrink: 0;
+      color: #ccc;
+    }
+    .ri.top .ri-votes { color: #2B2D6E; }
+
+    .footer-note {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 11px;
+      color: #bbb;
+      line-height: 1.75;
+    }
+
+    /* ── LOADING ── */
+    .loading-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 12px;
+      color: #2B2D6E;
+    }
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2.5px solid #E2E6EC;
+      border-top-color: #2B2D6E;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-txt { font-size: 13px; color: #999; }
+
+    /* ── UTILITY ── */
+    .hidden { display: none !important; }
+
+    /* ── FADE IN ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeUp 0.3s ease forwards; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- LOADING -->
+  <div id="loadingView" class="loading-view content">
+    <div class="spinner"></div>
+    <div class="loading-txt">Wird geladen…</div>
+  </div>
+
+  <!-- VOTING VIEW -->
+  <div id="votingView" class="hidden">
+    <div class="hdr">
+      <img src="48438-OKS_Logo_RGB.jpg" alt="Ostschweizer Kinderspital" class="hdr-logo">
+      <div class="hdr-text">
+        <div class="hdr-inst">Ostschweizer Kinderspital</div>
+        <div class="hdr-title">«Noch einmal, bitte!»</div>
+        <div class="hdr-sub">Das grosse OKS Gastro-Voting</div>
+      </div>
+      <div class="counter" id="counterWidget">
+        <div class="cnt-num" id="counterNum">0/3</div>
+        <div class="cnt-dots">
+          <div class="cdot" id="d0"></div>
+          <div class="cdot" id="d1"></div>
+          <div class="cdot" id="d2"></div>
+        </div>
+      </div>
+    </div>
+    <div class="content fade-in">
+      <div class="intro">
+        Bevor sich die Türen unserer Gastronomie schliessen, möchten wir die Gelegenheit nutzen,
+        nochmals bewusst gemeinsam zu geniessen. Wählt eure drei Lieblingsmenüs –
+        die beliebtesten kommen in einer Spezialwoche nochmals auf den Menüplan.
+        Wir sind gespannt, welche Menüs zu euren Favoriten gehören!
+      </div>
+      <div class="grid" id="dishGrid"></div>
+      <button class="btn-submit" id="submitBtn" disabled onclick="submitVotes()">
+        Bitte 3 Menüs wählen
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULTS VIEW -->
+  <div id="resultsView" class="hidden">
+    <div class="hdr">
+      <img src="48438-OKS_Logo_RGB.jpg" alt="Ostschweizer Kinderspital" class="hdr-logo">
+      <div class="hdr-text">
+        <div class="hdr-inst">Ostschweizer Kinderspital</div>
+        <div class="hdr-title">«Noch einmal, bitte!»</div>
+        <div class="hdr-sub">Das grosse OKS Gastro-Voting</div>
+      </div>
+    </div>
+    <div class="content fade-in">
+      <div class="res-hdr">
+        <div class="res-title">
+          <div class="res-title-dot"></div>
+          Aktuelle Ergebnisse
+        </div>
+        <div class="res-count" id="participantCount"></div>
+      </div>
+      <div id="resultsList"></div>
+      <div class="footer-note">
+        Danke für deine Stimme! 🙏<br>
+        Die beliebtesten Gerichte kommen in einer Spezialwoche nochmals auf den Menüplan.
+      </div>
+    </div>
+  </div>
+
+</div>
+<script type="module">
+
+  // ═══════════════════════════════════════════════════════
+  //  FIREBASE CONFIG  –  hier deine Werte eintragen!
+  //
+  //  1. Geh auf https://console.firebase.google.com
+  //  2. Neues Projekt erstellen (z.B. "OKSGastroVoting")
+  //  3. Realtime Database aktivieren (Testmodus, Region Europe)
+  //  4. Projekteinstellungen → Web-App hinzufügen → Config kopieren
+  //  5. Die 6 Zeilen unten ersetzen, fertig!
+  // ═══════════════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey:            "AIzaSyBTAowumB903EYnl8s-5fWOgwpSevbe-Is",
+    authDomain:        "oksgastrovoting.firebaseapp.com",
+    databaseURL:       "https://oksgastrovoting-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         "oksgastrovoting",
+    storageBucket:     "oksgastrovoting.firebasestorage.app",
+    messagingSenderId: "51469572542",
+    appId:             "1:51469572542:web:6dc1081e5233b91940c1ef"
+  };
+  // ═══════════════════════════════════════════════════════
+
+  import { initializeApp }             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getDatabase, ref, runTransaction, onValue }
+                                        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const DISHES = [
+    { id:1,  name:"Enchiladas",                     sub:"mit diversen Saucen" },
+    { id:2,  name:"Pouletspiessli",                 sub:"Satay Sauce, Eierreis" },
+    { id:3,  name:"Roasted Jalfrezi",               sub:null },
+    { id:4,  name:"Spaghettiplausch",               sub:"mit diversen Saucen" },
+    { id:5,  name:"Chickpea Curry",                 sub:null },
+    { id:6,  name:"Poulet Thai Curry Massaman",     sub:null },
+    { id:7,  name:"Chäshörnli",                     sub:"Apfelmus & Röstzwiebeln" },
+    { id:8,  name:"Grünes Gemüsecurry",             sub:"mit Tofu" },
+    { id:9,  name:"Paniertes Pouletbrüstli",        sub:"Pommes frites & Gemüse" },
+    { id:10, name:"Chicken Nuggets",                sub:"Ofenkartoffeln & Gemüse" },
+    { id:11, name:"Zürcher Kalbsgeschnetzeltes",    sub:"Rösti & Gemüse" },
+    { id:12, name:"Gebratene Auberginen",           sub:"Peperoni, Mozzarella, Rucola" },
+    { id:13, name:"«Fitnessteller» Falafel",        sub:"mit diversen Salaten" },
+    { id:14, name:"Rindsgeschnetzeltes Stroganoff", sub:"mit Spätzli" },
+    { id:15, name:"Nasi Goreng",                    sub:null },
+    { id:16, name:"Reis Casimir",                   sub:null },
+  ];
+
+  const VK = "oks_gastro_voted_v1";
+  const MK = "oks_gastro_myvotes_v1";
+
+  const fbApp  = initializeApp(firebaseConfig);
+  const db     = getDatabase(fbApp);
+  const dbRef  = ref(db, "gastro_voting");
+
+  let selected = [];
+  let myVotes  = [];
+  let hasVoted = false;
+
+  // ── INIT ──────────────────────────────────────────────
+  async function init() {
+    hasVoted = localStorage.getItem(VK) === "true";
+    myVotes  = JSON.parse(localStorage.getItem(MK) || "[]");
+
+    if (hasVoted) {
+      showResults(true);
+    } else {
+      buildGrid();
+      show("votingView");
+    }
+  }
+
+  // ── GRID ──────────────────────────────────────────────
+  function buildGrid() {
+    const grid = document.getElementById("dishGrid");
+    DISHES.forEach((dish, idx) => {
+      const card = document.createElement("div");
+      card.className = "dish";
+      card.id = `dish-${dish.id}`;
+      card.innerHTML =
+        `<div class="dish-num" id="num-${dish.id}">${idx + 1}</div>
+         <div class="dish-text">
+           <div class="dish-name">${dish.name}</div>
+           ${dish.sub ? `<div class="dish-sub">${dish.sub}</div>` : ""}
+         </div>`;
+      card.addEventListener("click", () => toggleDish(dish.id));
+      grid.appendChild(card);
+    });
+  }
+
+  function toggleDish(id) {
+    const i = selected.indexOf(id);
+    if (i > -1) {
+      selected.splice(i, 1);
+    } else if (selected.length < 3) {
+      selected.push(id);
+    } else {
+      return;
+    }
+    refreshGrid();
+  }
+
+  function refreshGrid() {
+    const n = selected.length;
+    document.getElementById("counterNum").textContent = `${n}/3`;
+    [0, 1, 2].forEach(i => {
+      document.getElementById(`d${i}`).style.background =
+        i < n ? "#E8404A" : "#E2E6EC";
+    });
+    DISHES.forEach((dish, idx) => {
+      const card = document.getElementById(`dish-${dish.id}`);
+      const num  = document.getElementById(`num-${dish.id}`);
+      const on   = selected.includes(dish.id);
+      const off  = !on && n >= 3;
+      card.className = "dish" + (on ? " selected" : "") + (off ? " disabled" : "");
+      num.textContent = on ? "✓" : idx + 1;
+    });
+    const btn = document.getElementById("submitBtn");
+    if (n === 3) {
+      btn.textContent = "Stimme abgeben →";
+      btn.className   = "btn-submit ready";
+      btn.disabled    = false;
+    } else {
+      btn.textContent = n === 0 ? "Bitte 3 Menüs wählen"
+                                : `Noch ${3 - n} Menü${3 - n > 1 ? "s" : ""} wählen`;
+      btn.className   = "btn-submit";
+      btn.disabled    = true;
+    }
+  }
+
+  // ── SUBMIT ────────────────────────────────────────────
+  window.submitVotes = async function () {
+    if (selected.length !== 3) return;
+    const btn = document.getElementById("submitBtn");
+    btn.textContent = "Wird gesendet…";
+    btn.className   = "btn-submit";
+    btn.disabled    = true;
+
+    try {
+      await runTransaction(dbRef, (current) => {
+        const d = current || { votes: {}, participants: 0 };
+        selected.forEach(id => { d.votes[id] = (d.votes[id] || 0) + 1; });
+        d.participants = (d.participants || 0) + 1;
+        return d;
+      });
+      localStorage.setItem(VK, "true");
+      localStorage.setItem(MK, JSON.stringify(selected));
+      myVotes  = [...selected];
+      hasVoted = true;
+      showResults(true);
+    } catch (e) {
+      console.error(e);
+      btn.textContent = "Fehler – bitte nochmals versuchen";
+      btn.className   = "btn-submit ready";
+      btn.disabled    = false;
+    }
+  };
+
+  // ── RESULTS ───────────────────────────────────────────
+  function showResults(animateFirst) {
+    show("resultsView");
+    let first = animateFirst;
+    onValue(dbRef, (snap) => {
+      const data = snap.val() || { votes: {}, participants: 0 };
+      renderResults(data, first);
+      first = false;
+    });
+  }
+
+  function renderResults(data, animate) {
+    const votes = data.votes || {};
+    const part  = data.participants || 0;
+
+    document.getElementById("participantCount").textContent =
+      `${part} ${part === 1 ? "Person hat" : "Personen haben"} bereits abgestimmt`;
+
+    const sorted = [...DISHES].sort((a, b) => (votes[b.id] || 0) - (votes[a.id] || 0));
+    const maxV   = Math.max(...DISHES.map(d => votes[d.id] || 0), 1);
+    const list   = document.getElementById("resultsList");
+    list.innerHTML = "";
+
+    sorted.forEach((dish, i) => {
+      const v    = votes[dish.id] || 0;
+      const pct  = (v / maxV) * 100;
+      const top  = i < 3 && v > 0;
+      const mine = myVotes.includes(dish.id);
+      const rank = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+
+      const item = document.createElement("div");
+      item.className = "ri" + (top ? " top" : "");
+      item.innerHTML =
+        `<div class="ri-rank">
+           ${rank ? rank : `<span class="ri-rank-num">${i + 1}.</span>`}
+         </div>
+         <div class="ri-info">
+           <div class="ri-name">
+             <span class="ri-name-txt">${dish.name}</span>
+             ${mine ? `<span class="my-badge">Meine Wahl</span>` : ""}
+           </div>
+           <div class="bar-bg">
+             <div class="bar-fill" id="bar-${dish.id}"></div>
+           </div>
+         </div>
+         <div class="ri-votes">${v}</div>`;
+      list.appendChild(item);
+
+      const delay = animate ? 80 + i * 25 : 0;
+      setTimeout(() => {
+        const bar = document.getElementById(`bar-${dish.id}`);
+        if (bar) bar.style.width = `${pct}%`;
+      }, delay);
+    });
+  }
+
+  // ── HELPERS ───────────────────────────────────────────
+  function show(id) {
+    ["loadingView", "votingView", "resultsView"].forEach(v => {
+      document.getElementById(v).classList.toggle("hidden", v !== id);
+    });
+  }
+
+  init().catch(err => {
+    console.error(err);
+    document.getElementById("loadingView").innerHTML =
+      `<div style="padding:40px;text-align:center;color:#E8404A;font-size:13px">
+        Verbindungsfehler.<br>Bitte Firebase-Konfiguration prüfen.
+       </div>`;
+  });
+
+</script>
+</body>
+</html>
